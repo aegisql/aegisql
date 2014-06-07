@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<authentication_provider name="default_authentication" class="com.aegisql.authentication.DatabaseAuthenticationProvider">
+		<!-- Configure datasource for the AUTHENTICATION schema -->
+		<data_source class="org.apache.commons.dbcp.BasicDataSource">
+			<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+			<property name="url" value="jdbc:mysql://localhost:3306/AUTHENTICATION" />
+			<property name="username" value="root" />
+			<property name="password" value="" />
+		</data_source>
+		<!-- Select all groups for the user identified by password -->
+		<select_users_groups_sql>
+		<![CDATA[
+			SELECT 
+				G.ID,
+				G.GROUP_NAME,
+				IF(G.ID=U.DEFAULT_GROUP_ID,1,0) AS DEFAULT_GROUP,
+				G.ACCESSOR, 
+				UG.ACCESSOR_ID
+			FROM 
+	        	USERS U INNER JOIN GROUPS G INNER JOIN USER_GROUP_MAP UG
+		   	ON 
+		   		(U.ID = UG.USER_ID AND G.ID = UG.GROUP_ID) 
+		   	WHERE 
+	       		U.USER_NAME=?
+	       		AND U.PASSWORD=?
+	       		AND U.ENABLED=1 
+	       		AND G.ENABLED=1 
+	       		AND (U.PASSWORD_EXPIRATION IS NULL OR U.PASSWORD_EXPIRATION > NOW())
+		   	ORDER BY 
+		   		DEFAULT_GROUP DESC	
+		]]>
+		</select_users_groups_sql>
+		<!-- RegExp Patterns for all allowed groups -->
+	</authentication_provider>
+	<authentication_provider name="xml_authentication" class="com.aegisql.authentication.XMLAuthenticationProvider">
+		<group id="1" name="ADMIN" />
+		<group id="2" name="USER" accessor="ACCESSOR_ID" />
+		<group id="3" name="POWER_USER" accessor="ACCESSOR_ID" />
+		<group id="4" name="GUEST" />
+		<user name="mike" password="12345">
+			<user_group ref_name="POWER_USER" default="true" accessor_id="1001"/>
+			<user_group ref_name="USER" />
+		</user>
+		<user name="nikita" password="12345">
+			<user_group ref_name="USER" default="true" accessor_id="1002"/>
+		</user>
+	</authentication_provider>
+
+	<authentication_provider name="chain_authentication" class="com.aegisql.authentication.ChainAuthenticationProvider">
+		<authentication_provider name="default_authentication"/>
+		<authentication_provider name="xml_authentication"/>
+	</authentication_provider>
+	<groups>
+		<group name="*" />
+		<group_exclude name="BLAH" />
+	</groups>
+
+</config>

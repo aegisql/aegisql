@@ -1,0 +1,65 @@
+---
+TEST: YAML_TEST
+DESCRIPTION: |
+ This is an example of a simple Group and Access configuration
+ For the Yaml Test. Repeat corresponding SQL fixtures.
+SQL: select * from a_table submitted by 'mike' identified by '12345';
+EXPECTED: select ID,NAME from a_table where ACCESSOR_ID=1001;
+USER: mike
+MANAGED_USER:
+PASSWORD: 12345
+DEVICE:
+HOST:
+DEFAULT_SCHEMA: 
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: 
+-   NAME: POWER_USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1002
+    IS_DEFAULT: true
+GRANTED:
+-   SCHEMA: 
+    TABLE: a_table
+    GROUP: USER
+    USER: "%"
+    HOST: "%"
+    DEVICE: "%"
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT,INSERT,UPDATE,DELETE]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [SELECT,INSERT]
+    - COLUMN: NAME
+      ACCESS: [SELECT,INSERT,UPDATE]
+
+---
+TEST: MINIMAL_YAML_TEST
+DESCRIPTION: >
+ This is an example of a minimal Group and Access configuration. Most of optional filds ommitted
+ For the Yaml Test. Repeat corresponding SQL fixtures.
+ This test tekes user name and password from the SQL statement
+ 
+SQL: select * from a_table submitted by 'mike' identified by '12345';
+EXPECTED: select ID,NAME from a_table where ACCESSOR_ID=1001;
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+-   NAME: POWER_USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1002
+    IS_DEFAULT: true
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT,INSERT,UPDATE,DELETE]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [SELECT,INSERT]
+    - COLUMN: NAME
+      ACCESS: [SELECT,INSERT,UPDATE]
+      

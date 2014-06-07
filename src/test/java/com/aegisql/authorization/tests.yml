@@ -1,0 +1,685 @@
+---
+TEST: TEST_1
+DESCRIPTION: |
+ Most simple select statement
+SQL: select * from a_table submitted by 'user_1' identified by '12345';
+EXPECTED: SELECT a_table.ID, a_table.NAME FROM a_table WHERE a_table.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [SELECT]
+    - COLUMN: NAME
+      ACCESS: [SELECT]
+---
+TEST: TEST_1.1
+DESCRIPTION: |
+ Most simple select statement
+SQL: select a.* from a_table a submitted by 'user_1' identified by '12345';
+EXPECTED: SELECT a_table.ID, a_table.NAME FROM a_table as a WHERE a.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [SELECT]
+    - COLUMN: NAME
+      ACCESS: [SELECT]
+---
+TEST: TEST_2
+DESCRIPTION: |
+ Simple select statement.
+SQL: select NAME from a_table submitted by 'user_1' identified by '12345';
+EXPECTED: SELECT NAME FROM a_table WHERE a_table.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: NAME
+      ACCESS: [SELECT]
+---
+TEST: TEST_3
+DESCRIPTION: |
+ Simple select statement that should be rejected.
+SQL: select ADDRESS from a_table submitted by 'user_1' identified by '12345';
+EXPECTED: com.aegisql.authorization.AuthorizationException
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: NAME
+      ACCESS: [SELECT]
+---
+TEST: TEST_4
+DESCRIPTION: |
+ select statement with 2 tables.
+SQL: >
+ select 
+    TA.NAME,TB.ADDRESS 
+ from 
+    a_table TA, b_table TB 
+ submitted by 'user_1' identified by '12345';
+ 
+EXPECTED: >
+ SELECT 
+    TA.NAME,TB.ADDRESS 
+ FROM 
+    a_table TA, b_table TB 
+ WHERE 
+    TA.ACCESSOR_ID = 1001 AND TB.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: NAME
+      ACCESS: [SELECT]
+-   TABLE: b_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: ADDRESS
+      ACCESS: [SELECT]
+---
+TEST: TEST_5
+DESCRIPTION: |
+ select statement with 2 tables and join.
+SQL: >
+ select 
+    TA.NAME, TB.ADDRESS
+ from 
+    a_table TA inner join b_table TB 
+ on
+    TA.ID = TB.A_ID   
+ submitted by 'user_1' identified by '12345';
+ 
+EXPECTED: > 
+ SELECT 
+    TA.NAME,TB.ADDRESS 
+ FROM 
+    a_table TA INNER JOIN b_table TB
+ ON 
+    TA.ID = TB.A_ID    
+ WHERE 
+    TA.ACCESSOR_ID = 1001 AND TB.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: NAME
+      ACCESS: [SELECT]
+    - COLUMN: ID
+      ACCESS: [SELECT]
+-   TABLE: b_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: ADDRESS
+      ACCESS: [SELECT]
+    - COLUMN: A_ID
+      ACCESS: [SELECT]
+---
+TEST: TEST_6
+DESCRIPTION: |
+ select statement with 2 tables and join. Should fail because joining columns not included
+SQL: >
+ select 
+    TA.NAME, TB.ADDRESS
+ from 
+    a_table TA inner join b_table TB 
+ on
+    TA.ID = TB.A_ID   
+ submitted by 'user_1' identified by '12345';
+ 
+EXPECTED: com.aegisql.authorization.AuthorizationException
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: NAME
+      ACCESS: [SELECT]
+-   TABLE: b_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: ADDRESS
+      ACCESS: [SELECT]
+
+---
+TEST: TEST_7
+DESCRIPTION: |
+ select statement with no tables. does not need authorization
+SQL: >
+ select 'mike' AS NAME 
+EXPECTED: SELECT 'mike' AS NAME
+---
+TEST: TEST_8
+DESCRIPTION: |
+ Most simple update statement
+SQL: update a_table SET NAME='mike' submitted by 'user_1' identified by '12345';
+EXPECTED: UPDATE a_table SET NAME = 'mike' WHERE a_table.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [UPDATE]
+    COLUMN_ACCESS:
+    - COLUMN: NAME
+      ACCESS: [UPDATE]
+---
+TEST: TEST_8.1
+DESCRIPTION: |
+ Rejected update statement
+SQL: update a_table SET NAME='mike' submitted by 'user_1' identified by '12345';
+EXPECTED: com.aegisql.authorization.AuthorizationException
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: NAME
+      ACCESS: [UPDATE]
+---
+TEST: TEST_8.2
+DESCRIPTION: |
+ Rejected update statement 2
+SQL: update a_table SET NAME='mike' submitted by 'user_1' identified by '12345';
+EXPECTED: com.aegisql.authorization.AuthorizationException
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [UPDATE]
+    COLUMN_ACCESS:
+    - COLUMN: NAME
+      ACCESS: [SELECT]
+---
+TEST: TEST_8.3
+DESCRIPTION: |
+ Rejected update statement
+SQL: update a_table SET NAME='mike' submitted by 'user_1' identified by '12345';
+EXPECTED: com.aegisql.authorization.AuthorizationException
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: POWER_USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [UPDATE]
+    COLUMN_ACCESS:
+    - COLUMN: NAME
+      ACCESS: [UPDATE]
+---
+TEST: TEST_9
+DESCRIPTION: |
+ Most simple delete statement
+SQL: delete from a_table submitted by 'user_1' identified by '12345';
+EXPECTED: delete from a_table WHERE a_table.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [DELETE]
+---
+TEST: TEST_9.1
+DESCRIPTION: |
+ Rejected delete statement
+SQL: delete from a_table submitted by 'user_1' identified by '12345';
+EXPECTED: com.aegisql.authorization.AuthorizationException
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT,UPDATE]
+---
+TEST: TEST_9.2
+DESCRIPTION: |
+ Rejected delete statement
+SQL: delete from a_table submitted by 'user_1' identified by '12345';
+EXPECTED: com.aegisql.authorization.AuthorizationException
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: POWER_USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [DELETE]
+---
+TEST: TEST_10
+DESCRIPTION: |
+ Most simple insert statement
+SQL: insert into a_table (ID,NAME) values(1,'mike') submitted by 'user_1' identified by '12345';
+EXPECTED: INSERT INTO a_table (ID, NAME, a_table.ACCESSOR_ID) VALUES (1, 'mike', 1001)
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [INSERT]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [INSERT]
+    - COLUMN: NAME
+      ACCESS: [INSERT]
+---
+TEST: TEST_10.1
+DESCRIPTION: |
+ Rejected insert statement
+SQL: insert into a_table (ID,NAME) values(1,'mike') submitted by 'user_1' identified by '12345';
+EXPECTED: com.aegisql.authorization.AuthorizationException
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT,UPDATE]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [INSERT]
+    - COLUMN: NAME
+      ACCESS: [INSERT]
+---
+TEST: TEST_10.2
+DESCRIPTION: |
+ Most simple insert statement
+SQL: insert into a_table SET ID=1, NAME='mike' submitted by 'user_1' identified by '12345';
+EXPECTED: INSERT INTO a_table SET ID=1, NAME='mike', a_table.ACCESSOR_ID='1001'
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [INSERT]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [INSERT]
+    - COLUMN: NAME
+      ACCESS: [INSERT]
+
+---
+TEST: TEST_11
+DESCRIPTION: |
+ complex delete and select statement
+SQL: delete from a_table where ID in (select A_ID from b_table where NAME='user_2') submitted by 'user_1' identified by '12345';
+EXPECTED: DELETE FROM a_table WHERE ID in (select A_ID from b_table where NAME='user_2' AND b_table.ACCESSOR_ID = 1001) AND a_table.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [DELETE,SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [SELECT]
+-   TABLE: b_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT,DELETE]
+    COLUMN_ACCESS:
+    - COLUMN: A_ID
+      ACCESS: [SELECT]
+    - COLUMN: NAME
+      ACCESS: [SELECT]
+---
+TEST: TEST_12
+DESCRIPTION: |
+ complex insert and select statement
+SQL: insert into a_table (ID,A,B) select A_ID,A,B from b_table where D=0 submitted by 'user_1' identified by '12345';
+EXPECTED:  insert into a_table (ID,A,B,a_table.ACCESSOR_ID) select A_ID,A,B,'1001' as ACCESSOR_ID from b_table where D=0 AND b_table.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [INSERT]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [INSERT]
+    - COLUMN: A
+      ACCESS: [INSERT]
+    - COLUMN: B
+      ACCESS: [INSERT]
+    - COLUMN: ACCESSOR_ID
+      ACCESS: [INSERT]
+-   TABLE: b_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: A_ID
+      ACCESS: [SELECT]
+    - COLUMN: A
+      ACCESS: [SELECT]
+    - COLUMN: B
+      ACCESS: [SELECT]
+    - COLUMN: D
+      ACCESS: [SELECT]
+---
+TEST: TEST_12.1
+DESCRIPTION: |
+ complex insert and select statement which has inner select
+SQL: >
+ insert into a_table (ID,A,B) 
+  select A_ID,A,B from b_table 
+   where D=(SELECT MIN(D) FROM c_table) submitted by 'user_1' identified by '12345';
+EXPECTED:  >
+ INSERT INTO a_table (ID, A, B, a_table.ACCESSOR_ID) 
+  SELECT A_ID, A, B, '1001' as ACCESSOR_ID FROM b_table 
+   WHERE D = (SELECT MIN(D) FROM c_table WHERE c_table.ACCESSOR_ID = 1001) AND b_table.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [INSERT]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [INSERT]
+    - COLUMN: A
+      ACCESS: [INSERT]
+    - COLUMN: B
+      ACCESS: [INSERT]
+    - COLUMN: ACCESSOR_ID
+      ACCESS: [INSERT]
+-   TABLE: b_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: A_ID
+      ACCESS: [SELECT]
+    - COLUMN: A
+      ACCESS: [SELECT]
+    - COLUMN: B
+      ACCESS: [SELECT]
+    - COLUMN: D
+      ACCESS: [SELECT]
+-   TABLE: c_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: D
+      ACCESS: [SELECT]
+---
+TEST: TEST_13 #Unsupported by parser. Need to be implemented 
+DESCRIPTION: >
+ Complex update with join
+SQL: >
+ UPDATE T1,T2
+ SET T1.C2 = T2.C2,
+     T2.C3 = 'UPDATED'
+ WHERE T1.C1 = T2.C1 T1.C2 < 10
+ submitted by 'user_1' identified by '12345';
+EXPECTED: > 
+ UPDATE T1,T2
+  INNER JOIN T2 ON T1.C1 = T2.C1
+ SET T1.C2 = T2.C2,
+     T2.C3 = 'UPDATED'
+ WHERE T1.C2 < 10 AND T1.ACCESSOR_ID=1001 AND T2.ACCESSOR_ID=1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: T1
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [UPDATE]
+    COLUMN_ACCESS:
+    - COLUMN: C1
+      ACCESS: [UPDATE]
+    - COLUMN: C2
+      ACCESS: [UPDATE]
+-   TABLE: T2
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [UPDATE]
+    COLUMN_ACCESS:
+    - COLUMN: C1
+      ACCESS: [UPDATE]
+    - COLUMN: C2
+      ACCESS: [UPDATE]
+    - COLUMN: C3
+      ACCESS: [UPDATE]
+---
+TEST: TEST_14
+DESCRIPTION: |
+ Most simple insert statement
+SQL: replace a_table (ID,NAME) values(1,'mike') submitted by 'user_1' identified by '12345';
+EXPECTED: REPLACE INTO a_table (ID, NAME, a_table.ACCESSOR_ID) VALUES (1, 'mike', 1001)
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [REPLACE]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [REPLACE]
+    - COLUMN: NAME
+      ACCESS: [REPLACE]
+---
+TEST: TEST_14.1
+DESCRIPTION: |
+ complex replace and select statement
+SQL: replace a_table (ID,A,B) select A_ID,A,B from b_table where D=0 submitted by 'user_1' identified by '12345';
+EXPECTED:  REPLACE a_table (ID, A, B, a_table.ACCESSOR_ID) SELECT A_ID, A, B, '1001' AS ACCESSOR_ID FROM b_table WHERE D = 0 AND b_table.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [INSERT,REPLACE]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [INSERT,REPLACE]
+    - COLUMN: A
+      ACCESS: [INSERT,REPLACE]
+    - COLUMN: B
+      ACCESS: [INSERT,REPLACE]
+    - COLUMN: ACCESSOR_ID
+      ACCESS: [INSERT,REPLACE]
+-   TABLE: b_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: A_ID
+      ACCESS: [SELECT]
+    - COLUMN: A
+      ACCESS: [SELECT]
+    - COLUMN: B
+      ACCESS: [SELECT]
+    - COLUMN: D
+      ACCESS: [SELECT]
+---
+TEST: TEST_14.2
+DESCRIPTION: |
+ complex replace and select statement which has inner select
+SQL: >
+ replace into a_table (ID,A,B) 
+  select A_ID,A,B from b_table 
+   where D=(SELECT MIN(D) FROM c_table) submitted by 'user_1' identified by '12345';
+EXPECTED:  >
+ REPLACE INTO a_table (ID, A, B, a_table.ACCESSOR_ID) 
+  SELECT A_ID, A, B, '1001' as ACCESSOR_ID FROM b_table 
+   WHERE D = (SELECT MIN(D) FROM c_table WHERE c_table.ACCESSOR_ID = 1001) AND b_table.ACCESSOR_ID = 1001
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [INSERT,REPLACE]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [INSERT,REPLACE]
+    - COLUMN: A
+      ACCESS: [INSERT,REPLACE]
+    - COLUMN: B
+      ACCESS: [INSERT,REPLACE]
+    - COLUMN: ACCESSOR_ID
+      ACCESS: [INSERT,REPLACE]
+-   TABLE: b_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: A_ID
+      ACCESS: [SELECT]
+    - COLUMN: A
+      ACCESS: [SELECT]
+    - COLUMN: B
+      ACCESS: [SELECT]
+    - COLUMN: D
+      ACCESS: [SELECT]
+-   TABLE: c_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [SELECT]
+    COLUMN_ACCESS:
+    - COLUMN: D
+      ACCESS: [SELECT]
+---
+TEST: TEST_14.3
+DESCRIPTION: |
+ Most simple rplace statement
+SQL: replace a_table SET ID=1, NAME='mike' submitted by 'user_1' identified by '12345';
+EXPECTED: REPLACE INTO a_table SET ID=1, NAME='mike', a_table.ACCESSOR_ID='1001'
+GROUPS:
+-   NAME: USER
+    ACCESSOR: ACCESSOR_ID
+    ACCESSOR_ID: 1001
+    IS_DEFAULT: true 
+GRANTED:
+-   TABLE: a_table
+    GROUP: USER
+    ACCESSOR: ACCESSOR_ID
+    TABLE_ACCESS: [REPLACE]
+    COLUMN_ACCESS:
+    - COLUMN: ID
+      ACCESS: [REPLACE]
+    - COLUMN: NAME
+      ACCESS: [REPLACE]
+      
