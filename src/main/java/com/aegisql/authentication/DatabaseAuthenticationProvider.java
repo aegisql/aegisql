@@ -86,7 +86,7 @@ public class DatabaseAuthenticationProvider implements AuthenticationProvider {
 					} else if(Float.TYPE.equals(type)) {
 						m.invoke(dataSource, Float.parseFloat(value));
 					} else {
-						throw new Exception("Unsupported type "+type+" in node "+propertyNode+"; expected value "+value);
+						throw new Exception("Unsupported type "+type+" in node "+propertyNode+"; provided value "+value);
 					}
 					break;
 				}
