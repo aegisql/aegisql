@@ -67,7 +67,7 @@ public class GrantedAIS implements Granted, Connectable {
 			if( ! rs.next() ) {
 				return null;
 			}
-			ga = new GrantedAccess(schema,table, rs.getString("_ACCESSOR_"));
+			ga = new GrantedAccess(schema,table, rs.getString("_ACCESSOR_"), accessor);
 			String tableAccessString = rs.getString("_TABLE_ACCESS_");
 			ga.setTableAccess( new TableAccess(table,getTableQueryTypeSet(tableAccessString) ));
 			for(int i = 1; i <= rsmd.getColumnCount(); i++) {

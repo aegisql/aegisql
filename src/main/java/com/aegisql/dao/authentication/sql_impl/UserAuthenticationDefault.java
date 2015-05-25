@@ -43,7 +43,6 @@ ORDER BY DEFAULT_GROUP DESC;
 	public List<Group> getUserGroups(String userName, String password) throws SQLException {
 		List<Group> groups = new ArrayList<Group>();
 		String sql = String.format(SELECT_GROUP,authenticationSchemaName,userName,password);
-		
 		try( Statement st = connection.createStatement() ) {
 			ResultSet rs = st.executeQuery(sql);
 			while( rs.next() ) {
@@ -68,6 +67,11 @@ ORDER BY DEFAULT_GROUP DESC;
 		} else {
 			this.authenticationSchemaName = authenticationSchemaName + ".";			
 		}
+	}
+
+	@Override
+	public List<Group> getUserGroups(String userName, String password, String managedUser) throws SQLException {
+		return null;
 	}
 
 }

@@ -8,13 +8,15 @@ public class GrantedAccess {
 	private final String             schema;
 	private final String             tableName;
 	private final String             accessorName;
+	private final AccessPattern      accessPattern;
 	private TableAccess              tableAccess;
 	private final List<ColumnAccess> columns = new ArrayList<ColumnAccess>();
 	
-	public GrantedAccess(String schema, String tableName, String accessorName) {	
-		this.schema       = schema;
-		this.tableName    = tableName;
-		this.accessorName = accessorName;
+	public GrantedAccess(String schema, String tableName, String accessorName, AccessPattern ap) {	
+		this.schema        = schema;
+		this.tableName     = tableName;
+		this.accessorName  = accessorName;
+		this.accessPattern = ap;
 	}
 	
 	public TableAccess getTableAccess() {
@@ -49,7 +51,8 @@ public class GrantedAccess {
 	public String toString() {
 		return "GrantedAccess [" + schema + "." + tableName
 				+ " tableAccess=" + tableAccess
-				+ " columns=" + columns + "]";
+				+ " columns=" + columns
+				+ " accessPattern=" + accessPattern + "]";
 	}
 	
 	public boolean isTableAccessGranted( TableQueryType type ) {
@@ -62,6 +65,10 @@ public class GrantedAccess {
 			if(col.isGranted(type)) granted.add(col);
 		}
 		return granted;
+	}
+
+	public AccessPattern getAccessPattern() {
+		return accessPattern;
 	}
 	
 }

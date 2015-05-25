@@ -225,6 +225,13 @@ public class YamlAuthorizationTestProvider {
 				
 				return gl;
 			}
+
+			@Override
+			public List<Group> getUserGroups(String userName, String password,
+					String managedUser) throws SQLException {
+				// TODO Auto-generated method stub
+				return null;
+			}
 			
 		};
 		
@@ -260,7 +267,7 @@ public class YamlAuthorizationTestProvider {
 			String accessor   = (String) gr.get("ACCESSOR");
 
 			AccessPattern ap  = new AccessPattern(groupName, userName, hostName, deviceName, accessor, null);
-			GrantedAccess ga  = new GrantedAccess(schema, table, accessor);
+			GrantedAccess ga  = new GrantedAccess(schema, table, accessor, ap);
 			
 			ArrayList<String> tableAccess = (ArrayList<String>) gr.get("TABLE_ACCESS");
 			String[] taArray = tableAccess.toArray(new String[]{});

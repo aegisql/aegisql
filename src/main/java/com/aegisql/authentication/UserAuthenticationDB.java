@@ -85,4 +85,9 @@ ORDER BY DEFAULT_GROUP DESC;
 		}
 	}
 
+	@Override
+	public List<Group> getUserGroups(String userName, String password, String managedUser) throws SQLException {
+		return null;
+	}
+
 }

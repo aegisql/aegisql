@@ -5,4 +5,5 @@ import java.util.List;
 
 public interface UserAuthentication {
 	List<Group> getUserGroups(String userName, String password) throws SQLException;
+	List<Group> getUserGroups(String userName, String password, String managedUser) throws SQLException;
 }

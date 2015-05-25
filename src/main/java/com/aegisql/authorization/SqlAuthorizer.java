@@ -34,9 +34,9 @@ import com.aegisql.authentication.UserAuthentication;
 import com.aegisql.sql.QueryAnalizer;
 import com.aegisql.sql.QueryEditor;
 
-public class SqlAuthorizer implements Authorizer {
+public final class SqlAuthorizer implements Authorizer {
 
-	public final Logger log = LoggerFactory.getLogger(SqlAuthorizer.class);
+	public final static Logger log = LoggerFactory.getLogger(SqlAuthorizer.class);
 
 	private final Granted granted;
 	private final UserAuthentication ua;
@@ -101,7 +101,7 @@ public class SqlAuthorizer implements Authorizer {
 				log.debug("Tables {}",tables);
 				if( tables.size()==0 ) {
 					if(authorize) {
-						return "";						
+						return "AUTHORIZED";						
 					} else {
 						return query;						
 					}
@@ -122,9 +122,9 @@ public class SqlAuthorizer implements Authorizer {
 		try {
 			groups = ua.getUserGroups(userName, password);
 			if ((groups == null) || (groups.size() == 0))
-				throw new SQLException("User " + submittedBy + " is not authorized");
+				throw new SQLException("User " + submittedBy + " is not authorized. Must be a member of at least one group.");
 			
-			log.debug("User {} is a member of groups: {}", userName, groups);
+			log.debug("User {}'s groups: {}", userName, groups);
 			
 			if( (allowedGroups != null ) && (allowedGroups.size()) > 0 ) {
 				log.debug("Checking connection restrictions.");
@@ -141,7 +141,6 @@ public class SqlAuthorizer implements Authorizer {
 			} else {
 				log.debug("No connection restrictions on groups found");
 			}
-			
 		} catch (SQLException e) {
 			throw new AuthorizationException(e);
 		}
@@ -153,20 +152,19 @@ public class SqlAuthorizer implements Authorizer {
 		log.debug("Reversed Aliases: {}",queryAnalizer.getReversedTableAliase());
 		log.debug("Found Columns: " + queryAnalizer.getAllColumns());
 		
-		modifiedQuery = grantAccess(query, queryAnalizer, accessPatternsSet);
+		modifiedQuery = modifyQuery(query, queryAnalizer, accessPatternsSet);
 
 		log.debug("Final query: {}", modifiedQuery);
 
 		if(authorize) {
-			return "AUTHORIZE";
-			
+			return "AUTHORIZED";
 		} else {
 			return modifiedQuery;			
 		}
 		
 	}
 
-	public String grantAccess(String queryOrig, QueryAnalizer queryAnalizer, Set<AccessPattern> accessPatterns) throws AuthorizationException {
+	public String modifyQuery(String queryOrig, QueryAnalizer queryAnalizer, Set<AccessPattern> accessPatterns) throws AuthorizationException {
 
 		String query = queryOrig;
 		TableQueryType mainQueryType = TableQueryType.valueOf(queryAnalizer.getStatement());
@@ -178,15 +176,14 @@ public class SqlAuthorizer implements Authorizer {
 					log.debug("Try greedy pattern {}",accessPattern);
 					CCJSqlParser parser  = new CCJSqlParser(new StringReader(query));
 					Statement st = parser.Statement();
-					Map<String, List<String>> granted = grantAccess(st, queryAnalizer, accessPattern, mainQueryType);
+					Map<String, List<String>> granted = buildTableColumnAccess(st, queryAnalizer, accessPattern, mainQueryType);
 					query = st.toAegisString();
 					log.debug("Granted Tables: " + granted);
 					Integer replaced = forceReplaceStar(st, granted);
 					sortedMap.put(replaced, st.toString());
 				} catch (AuthorizationException e) {
-					log.debug("rejected: {}: {}", accessPattern, e.getMessage());
+					log.debug("Pattern rejected: {}: {}", accessPattern, e.getMessage());
 				} catch (ParseException e) {
-					e.printStackTrace();
 					throw new AuthorizationException("Unexpected exception: ",e);
 				}
 			}
@@ -195,7 +192,7 @@ public class SqlAuthorizer implements Authorizer {
 			for (AccessPattern accessPattern : accessPatterns) {
 				try {
 					log.debug("Try pattern {}",accessPattern);
-					Map<String, List<String>> granted = grantAccess(queryAnalizer.getStatement(), queryAnalizer, accessPattern, mainQueryType);
+					Map<String, List<String>> granted = buildTableColumnAccess(queryAnalizer.getStatement(), queryAnalizer, accessPattern, mainQueryType);
 					log.debug("Granted Tables: " + granted);
 					oneGranted = true;
 					break; // first found already works
@@ -223,7 +220,7 @@ public class SqlAuthorizer implements Authorizer {
 		}
 	}
 
-	public Map<String, List<String>> grantAccess(Statement statement, QueryAnalizer queryAnalizer, AccessPattern accessPattern, TableQueryType mainQueryType) throws AuthorizationException {
+	public Map<String, List<String>> buildTableColumnAccess(Statement statement, QueryAnalizer queryAnalizer, AccessPattern accessPattern, TableQueryType mainQueryType) throws AuthorizationException {
 		Map<String, List<String>> granted = new HashMap<String, List<String>>();
 		
 		Map<String, Set<String>> columns = queryAnalizer.getAllColumns();
@@ -239,7 +236,7 @@ public class SqlAuthorizer implements Authorizer {
 			try {
 				TableQueryType queryType         = queryAnalizer.getQueryType(table);
 				log.debug("Query type for table {} is {} ", table, queryType);
-				granted.put(table, grantAccess(statement, queryType, mainQueryType, table, alias, col, accessPattern, ids));
+				granted.put(table, buildColumnAccess(statement, queryType, mainQueryType, table, alias, col, accessPattern, ids));
 			}catch(Exception e){
 				throw e;
 			}
@@ -248,7 +245,7 @@ public class SqlAuthorizer implements Authorizer {
 		return granted;
 	}
 
-	public List<String> grantAccess(Statement statement, TableQueryType queryType, TableQueryType mainQueryType, String table, String alias,
+	public List<String> buildColumnAccess(Statement statement, TableQueryType queryType, TableQueryType mainQueryType, String table, String alias,
 			Set<String> col, AccessPattern accessPattern, Set<TableAccesorID> ids) throws AuthorizationException {
 		log.debug("testing table {}",table);
 		GrantedAccess ga;

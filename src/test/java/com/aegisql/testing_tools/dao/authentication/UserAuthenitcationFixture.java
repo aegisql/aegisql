@@ -52,5 +52,12 @@ public class UserAuthenitcationFixture implements UserAuthentication {
 		
 		return uaf;
 	}
+
+	@Override
+	public List<Group> getUserGroups(String userName, String password,
+			String managedUser) throws SQLException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }

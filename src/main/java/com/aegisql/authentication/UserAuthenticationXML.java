@@ -17,5 +17,14 @@ public class UserAuthenticationXML implements UserAuthentication {
 	public void addGroup(String userName, String password, List<Group> g) {
 		groups.put("USER_"+userName+"_PASS_"+password, g);
 	}
+
+	public void addGroup(String userName, String password, String managedUser, List<Group> g) {
+		groups.put("USER_"+userName+"_PASS_"+password+"_MANAGED_"+managedUser, g);
+	}
+
+	@Override
+	public List<Group> getUserGroups(String userName, String password, String managedUser) throws SQLException {
+		return groups.get("USER_"+userName+"_PASS_"+password+"_MANAGED_"+managedUser);
+	}
 	
 }

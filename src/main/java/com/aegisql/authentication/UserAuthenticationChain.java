@@ -26,4 +26,16 @@ public class UserAuthenticationChain implements UserAuthentication {
 		chain.add(ua);
 	}
 
+	@Override
+	public List<Group> getUserGroups(String userName, String password, String managedUser) throws SQLException {
+		for( UserAuthentication ua: chain) {
+			List<Group> groups = ua.getUserGroups(userName, password, managedUser);
+			if( groups != null && groups.size() > 0 ) {
+				return groups;
+			}
+		}
+
+		return empty;
+	}
+
 }

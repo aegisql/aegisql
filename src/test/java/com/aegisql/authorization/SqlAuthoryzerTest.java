@@ -106,7 +106,7 @@ public class SqlAuthoryzerTest {
 		Account.removeProtectionAnyMikeAny(pt);
 		Account.addProtectionAnyMikeAny(pt);
 		String query = "SELECT * FROM ACCOUNT SUBMITTED BY 'mike' IDENTIFIED BY '12345'";
-		log.debug("Initial query query: "+query);
+		log.debug("Initial query: "+query);
 		
 		String modified = sa.buildAuthorizedQuery(query,null);
 		assertNotNull(modified);
